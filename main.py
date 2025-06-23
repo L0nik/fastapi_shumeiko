@@ -43,6 +43,32 @@ def create_hotel(
     )
     return {"status": "OK"}
 
+@app.put("/hotels/{hotel_id}")
+def put_hotel(
+        hotel_id: int,
+        title: str = Body(embed=True),
+        name: str = Body(embed=True)
+):
+    global hotels
+    hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id][0]
+    hotel["title"] = title
+    hotel["name"] = name
+    return {"status": "OK"}
+
+@app.patch("/hotels/{hotel_id}")
+def patch_hotel(
+        hotel_id: int,
+        title: str | None = Body(None, embed=True),
+        name: str | None = Body(None, embed=True)
+):
+    global hotels
+    hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id][0]
+    if title:
+        hotel["title"] = title
+    if name:
+        hotel["name"] = name
+    return {"status": "OK"}
+
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html():
     return get_swagger_ui_html(
