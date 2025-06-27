@@ -1,4 +1,6 @@
-from fastapi import Query, Body, APIRouter
+from fastapi import Query, APIRouter, Body
+
+from schemas.hotels import Hotel, HotelPATCH
 
 router = APIRouter(prefix="/hotels", tags=["Отели"])
 
@@ -38,11 +40,32 @@ def delete_hotel(hotel_id: int):
     summary="Создание отеля"
 )
 def create_hotel(
-        title: str = Body(embed=True)
+        hotel_data: Hotel = Body(openapi_examples={
+            "1" : {
+                "summary": "Сочи",
+                "description": "",
+                "value": {
+                    "title": "Отель Сочи 5 звезд у моря",
+                    "name": "sochi_u_morya"
+                }
+            },
+            "2" : {
+                "summary": "Дубай",
+                "description": "",
+                "value": {
+                    "title": "Отель Дубай у фонтана",
+                    "name": "dubai_fountain"
+                }
+            }
+        })
 ):
     global hotels
     hotels.append(
-        {"id": hotels[-1]["id"] + 1, "title": title}
+        {
+            "id": hotels[-1]["id"] + 1,
+            "title": hotel_data.title,
+            "name": hotel_data.name
+        }
     )
     return {"status": "OK"}
 
@@ -52,13 +75,12 @@ def create_hotel(
 )
 def put_hotel(
         hotel_id: int,
-        title: str = Body(embed=True),
-        name: str = Body(embed=True)
+        hotel_data: Hotel
 ):
     global hotels
     hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id][0]
-    hotel["title"] = title
-    hotel["name"] = name
+    hotel["title"] = hotel_data.title
+    hotel["name"] = hotel_data.name
     return {"status": "OK"}
 
 @router.patch(
@@ -67,13 +89,12 @@ def put_hotel(
 )
 def patch_hotel(
         hotel_id: int,
-        title: str | None = Body(None, embed=True),
-        name: str | None = Body(None, embed=True)
+        hotel_data: HotelPATCH
 ):
     global hotels
     hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id][0]
-    if title:
-        hotel["title"] = title
-    if name:
-        hotel["name"] = name
+    if hotel_data.title:
+        hotel["title"] = hotel_data.title
+    if hotel_data.name:
+        hotel["name"] = hotel_data.name
     return {"status": "OK"}
