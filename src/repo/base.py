@@ -22,6 +22,6 @@ class BaseRepository:
         return result.scalars().one_or_none()
 
     async def add(self, data: BaseModel):
-        add_stmt = insert(self.model).values(vars(data)).returning(self.model.id)
+        add_stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
         result = await self.session.execute(add_stmt)
-        return result.one_or_none()._asdict()
+        return result.scalars().one()

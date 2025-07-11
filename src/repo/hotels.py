@@ -28,16 +28,3 @@ class HotelsRepository(BaseRepository):
         )
         result = await self.session.execute(query)
         return result.scalars().all()
-
-    async def add(self, hotel_data: Hotel):
-        add_stmt = (
-            insert(self.model)
-            .values(vars(hotel_data))
-            .returning(
-                self.model.id,
-                self.model.title,
-                self.model.location
-            )
-        )
-        result = await self.session.execute(add_stmt)
-        return result.one_or_none()._asdict()
