@@ -1,7 +1,8 @@
-from sqlalchemy import select, func
+from sqlalchemy import select, insert, func
 
 from src.models.hotels import HotelsModel
 from src.repo.base import BaseRepository
+from src.schemas.hotels import Hotel
 
 
 class HotelsRepository(BaseRepository):
@@ -27,3 +28,16 @@ class HotelsRepository(BaseRepository):
         )
         result = await self.session.execute(query)
         return result.scalars().all()
+
+    async def add(self, hotel_data: Hotel):
+        add_stmt = (
+            insert(self.model)
+            .values(vars(hotel_data))
+            .returning(
+                self.model.id,
+                self.model.title,
+                self.model.location
+            )
+        )
+        result = await self.session.execute(add_stmt)
+        return result.one_or_none()._asdict()
