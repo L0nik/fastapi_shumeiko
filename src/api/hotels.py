@@ -33,9 +33,11 @@ async def get_hotels(
     "/{hotel_id}",
     summary="Удалить отель"
 )
-def delete_hotel(hotel_id: int):
-    global hotels
-    hotels = [hotel for hotel in hotels if hotel["id"] != hotel_id]
+async def delete_hotel(hotel_id: int):
+    async with async_session_maker() as session:
+        repo = HotelsRepository(session)
+        await repo.delete(id=hotel_id)
+        await session.commit()
     return {"status": "OK"}
 
 @router.post(
@@ -63,9 +65,6 @@ async def create_hotel(
         })
 ):
     async with async_session_maker() as session:
-        # add_hotel_stmt = insert(HotelsModel).values(**hotel_data.model_dump())
-        # print(add_hotel_stmt.compile(engine, compile_kwargs={"literal_binds": True}))
-        # await session.execute(add_hotel_stmt)
         hotel = await HotelsRepository(session).add(hotel_data)
         await session.commit()
 
@@ -75,14 +74,14 @@ async def create_hotel(
     "/{hotel_id}",
     summary="Полное изменение данных отеля"
 )
-def put_hotel(
+async def put_hotel(
         hotel_id: int,
         hotel_data: Hotel
 ):
-    global hotels
-    hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id][0]
-    hotel["title"] = hotel_data.title
-    hotel["name"] = hotel_data.name
+    async with async_session_maker() as session:
+        repo = HotelsRepository(session)
+        await repo.edit(hotel_data, id=hotel_id)
+        await session.commit()
     return {"status": "OK"}
 
 @router.patch(
