@@ -7,6 +7,7 @@ from src.schemas.hotels import Hotel
 
 class HotelsRepository(BaseRepository):
     model = HotelsModel
+    schema = Hotel
 
     async def get_all(
         self,
@@ -14,7 +15,7 @@ class HotelsRepository(BaseRepository):
         title,
         limit,
         offset
-    ):
+    ) -> list[Hotel]:
         query = select(HotelsModel)
         if location:
             query = query.filter(func.lower(HotelsModel.location).contains(location.lower()))
@@ -27,4 +28,4 @@ class HotelsRepository(BaseRepository):
             .offset(offset)
         )
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return [Hotel.model_validate(hotel, from_attributes=True) for hotel in result.scalars().all()]
