@@ -1,4 +1,4 @@
-
+import sqlalchemy.exc
 from sqlalchemy import select, insert, update, delete
 
 from pydantic import BaseModel
@@ -30,8 +30,11 @@ class BaseRepository:
 
     async def add(self, data: BaseModel):
         add_stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
-        result = await self.session.execute(add_stmt)
-        return self.schema.model_validate(result.scalars().one())
+        try:
+            result = await self.session.execute(add_stmt)
+            return self.schema.model_validate(result.scalars().one())
+        except sqlalchemy.exc.IntegrityError:
+            return None
 
     async def edit(self, data: BaseModel, exclude_unset: bool = False, **filter_by) -> None:
         update_stmt = (

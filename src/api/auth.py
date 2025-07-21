@@ -17,7 +17,10 @@ async def register_user(
     hashed_password = pwd_context.hash(user_data.password)
     new_user_data = UserAdd(email=user_data.email, hashed_password=hashed_password)
     async with async_session_maker() as session:
-        await UsersRepository(session).add(new_user_data)
+        user = await UsersRepository(session).add(new_user_data)
         await session.commit()
 
-    return {"status": "OK"}
+    if user:
+        return {"status": "OK"}
+    else:
+        return {"status": "ERROR"}
