@@ -12,12 +12,24 @@ class BaseRepository:
     def __init__(self, session):
         self.session = session
 
-    async def get_filtered(self, *filter, **filter_by):
+    async def get_filtered(
+        self,
+        *filter,
+        limit: int | None = None,
+        offset: int | None = None,
+        **filter_by
+    ):
         query = (
             select(self.model)
             .filter(*filter)
             .filter_by(**filter_by)
         )
+
+        if limit:
+            query = query.limit(limit)
+        if offset:
+            query = query.offset(offset)
+
         result = await self.session.execute(query)
         return [self.schema.model_validate(model) for model in result.scalars().all()]
 
