@@ -46,6 +46,10 @@ class BaseRepository:
         except sqlalchemy.exc.IntegrityError:
             return None
 
+    async def add_bulk(self, data: list[BaseModel]):
+        add_stmt = insert(self.model).values([item.model_dump() for item in data])
+        await self.session.execute(add_stmt)
+
     async def edit(self, data: BaseModel, exclude_unset: bool = False, **filter_by) -> None:
         update_stmt = (
             update(self.model)

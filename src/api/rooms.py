@@ -4,6 +4,7 @@ from datetime import date
 from src.database import async_session_maker
 from src.repo.rooms import RoomsRepository
 from src.api.dependencies import DBDep
+from src.schemas.facilities import RoomFacilityAdd
 from src.schemas.rooms import RoomAddRequest, RoomPatchRequest, RoomAdd, RoomPatch
 
 router = APIRouter(prefix="/hotels", tags=["Номера"])
@@ -37,6 +38,7 @@ async def create_room(
                     "description": "Просторный номер с видом на море",
                     "price": 10000,
                     "quantity": 10,
+                    "facilities_ids": []
                 }
             }
         }
@@ -44,6 +46,8 @@ async def create_room(
 ):
     _room_data = RoomAdd(hotel_id=hotel_id, **room_data.model_dump())
     new_room = await db.rooms.add(_room_data)
+    rooms_facilities_data = [RoomFacilityAdd(room_id=new_room.id, facility_id=facility_id) for facility_id in room_data.facilities_ids]
+    await db.rooms_facilities.add_bulk(rooms_facilities_data)
     await db.commit()
     return {"status": "OK", "data": new_room}
 
