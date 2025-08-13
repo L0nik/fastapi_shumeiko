@@ -78,28 +78,16 @@ async def put_room(
 ):
     _room_data = RoomAdd(hotel_id=hotel_id, **room_data.model_dump())
     await db.rooms.edit(_room_data, hotel_id=hotel_id, id=room_id)
-    await update_room_facilities(db, room_id, room_data)
+    await db.rooms_facilities.set_room_facilities(room_id, room_data.facilities_ids)
     await db.commit()
     return {"status": "OK"}
 
 @router.patch("/{hotel_id}/rooms/{room_id}", summary="Частичное изменение данных номера")
 async def patch_room(db: DBDep, hotel_id: int, room_id: int, room_data: RoomPatchRequest):
-    _room_data = RoomPatch(hotel_id=hotel_id, **room_data.model_dump(exclude_unset=True))
+    _room_data_dict = room_data.model_dump(exclude_unset=True)
+    _room_data = RoomPatch(hotel_id=hotel_id, **_room_data_dict)
     await db.rooms.edit(_room_data, exclude_unset=True, hotel_id=hotel_id, id=room_id)
-    await update_room_facilities(db, room_id, room_data)
+    if "facilities_ids" in _room_data_dict:
+        await db.rooms_facilities.set_room_facilities(room_id, room_data.facilities_ids)
     await db.commit()
     return {"status": "OK"}
-
-async def update_room_facilities(db: DBDep, room_id: int, room_data: RoomAddRequest | RoomPatchRequest):
-    current_rooms_facilities = await db.rooms_facilities.get_filtered(room_id=room_id)
-    current_facilities_ids = [room_facility.facility_id for room_facility in current_rooms_facilities]
-    facilities_to_delete = [facility_id for facility_id in current_facilities_ids if
-                            facility_id not in room_data.facilities_ids]
-    facilities_to_add = [
-        RoomFacilityAdd(facility_id=facility_id, room_id=room_id) for facility_id in room_data.facilities_ids
-        if facility_id not in current_facilities_ids
-    ]
-    if len(facilities_to_add):
-        await db.rooms_facilities.add_bulk(facilities_to_add)
-    if len(facilities_to_delete):
-        await db.rooms_facilities.delete(room_id=room_id, facilities_ids=facilities_to_delete)
