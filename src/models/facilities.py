@@ -1,5 +1,5 @@
 from sqlalchemy import String, ForeignKey
-from sqlalchemy.orm import mapped_column, Mapped
+from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from src.database import BaseModel
 
@@ -8,6 +8,11 @@ class FacilitiesModel(BaseModel):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(100))
+
+    rooms: Mapped[list["RoomsModel"]] = relationship(
+        back_populates = "facilities",
+        secondary = "rooms_facilities"
+    )
 
 class RoomsFacilitiesModel(BaseModel):
     __tablename__ = "rooms_facilities"
