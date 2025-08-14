@@ -21,7 +21,7 @@ async def get_rooms(
 
 @router.get("/{hotel_id}/rooms/{room_id}", summary="Получение данных конкретного номера")
 async def get_room(db: DBDep, hotel_id: int, room_id: int):
-    room = await db.rooms.get_one_or_none(hotel_id=hotel_id, id=room_id)
+    room = await db.rooms.get_one_or_none_with_rels(hotel_id=hotel_id, id=room_id)
     return {"status": "OK", "data": room}
 
 @router.post("/{hotel_id}/rooms", summary="Создание номера отеля")
