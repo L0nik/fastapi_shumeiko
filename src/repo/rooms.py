@@ -1,19 +1,17 @@
 from datetime import date
 
-from sqlalchemy import select, func
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
-from src.database import engine
-from src.models.bookings import BookingsModel
 from src.models.rooms import RoomsModel
 from src.repo.base import BaseRepository
-from src.schemas.rooms import Room, RoomWithRels
+from src.repo.mappers.mappers import RoomDataMapper, RoomWithRelsDataMapper
 from src.repo.utils import rooms_ids_for_booking
 
 
 class RoomsRepository(BaseRepository):
     model = RoomsModel
-    schema = Room
+    mapper = RoomDataMapper
 
     async def get_filtered_by_time(
         self,
@@ -31,7 +29,7 @@ class RoomsRepository(BaseRepository):
 
         result = await self.session.execute(query)
 
-        return [RoomWithRels.model_validate(model) for model in result.unique().scalars().all()]
+        return [RoomWithRelsDataMapper.map_to_domain_entity(model) for model in result.unique().scalars().all()]
 
     async def get_one_or_none_with_rels(self, **filter_by):
         query = (
@@ -44,4 +42,4 @@ class RoomsRepository(BaseRepository):
         if model is None:
             return None
         else:
-            return RoomWithRels.model_validate(model)
+            return RoomWithRelsDataMapper.map_to_domain_entity(model)

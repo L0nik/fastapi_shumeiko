@@ -3,11 +3,14 @@ from sqlalchemy import select, insert, update, delete
 
 from pydantic import BaseModel
 
+from src.repo.mappers.base import DataMapper
+from src.database import BaseModel as ModelORM
+
 
 class BaseRepository:
 
-    model = None
-    schema: BaseModel = None
+    model: ModelORM = None
+    mapper: DataMapper = None
 
     def __init__(self, session):
         self.session = session
@@ -24,7 +27,7 @@ class BaseRepository:
         )
 
         result = await self.session.execute(query)
-        return [self.schema.model_validate(model) for model in result.scalars().all()]
+        return [self.mapper.map_to_domain_entity(model) for model in result.scalars().all()]
 
     async def get_all(self, *args, **kwargs):
         return await self.get_filtered()
@@ -36,13 +39,13 @@ class BaseRepository:
         if model is None:
             return None
         else:
-            return self.schema.model_validate(model)
+            return self.mapper.map_to_domain_entity(model)
 
     async def add(self, data: BaseModel):
         add_stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
         try:
             result = await self.session.execute(add_stmt)
-            return self.schema.model_validate(result.scalars().one())
+            return self.mapper.map_to_domain_entity(result.scalars().one())
         except sqlalchemy.exc.IntegrityError:
             return None
 
